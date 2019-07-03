@@ -6,6 +6,8 @@ import datetime
 from torch.optim.sgd import SGD
 from torch.utils.data.dataset import ConcatDataset
 
+import torch
+
 import flair
 import flair.nn
 from flair.data import Sentence, MultiCorpus, Corpus
@@ -34,6 +36,7 @@ class ModelTrainer:
         loss: float = 10000.0,
         optimizer_state: dict = None,
         scheduler_state: dict = None,
+        seed: int = 1234,
     ):
         self.model: flair.nn.Model = model
         self.corpus: Corpus = corpus
@@ -42,6 +45,8 @@ class ModelTrainer:
         self.loss: float = loss
         self.scheduler_state: dict = scheduler_state
         self.optimizer_state: dict = optimizer_state
+        self.cuda = torch.cuda.is_available()
+        self.seed = seed
 
     def train(
         self,
@@ -63,9 +68,20 @@ class ModelTrainer:
         shuffle: bool = True,
         param_selection_mode: bool = False,
         num_workers: int = 8,
-        sampler=None,
+        sampler: torch.utils.data.Sampler = None,
+        horovod: bool = False,
         **kwargs,
     ) -> dict:
+
+        if horovod:
+            import horovod.torch as hvd
+            hvd.init()
+            torch.manual_seed(self.seed)
+
+        if self.cuda:
+            torch.cuda.set_device(hvd.local_rank())
+            torch.cuda.manual_seed(self.seed)
+            self.model.cuda()
 
         if eval_mini_batch_size is None:
             eval_mini_batch_size = mini_batch_size
@@ -112,6 +128,17 @@ class ModelTrainer:
         if self.optimizer_state is not None:
             optimizer.load_state_dict(self.optimizer_state)
 
+        if horovod:
+            # Add Horovod Distributed Optimizer
+            hvd.broadcast_optimizer_state(optimizer, root_rank=0)
+
+            optimizer = hvd.DistributedOptimizer(optimizer,
+                    named_parameters=self.model.named_parameters(),
+                    )
+
+            # Broadcast parameters from rank 0 to all other processes.
+            hvd.broadcast_parameters(self.model.state_dict(), root_rank=0)
+
         # minimize training loss if training with dev data, else maximize dev score
         anneal_mode = "min" if train_with_dev else "max"
 
@@ -142,6 +169,11 @@ class ModelTrainer:
 
         if sampler is not None:
             sampler = sampler(train_data)
+
+        if horovod:
+            # Partition dataset among workers using DistributedSampler
+            sampler = torch.utils.data.distributed.DistributedSampler(
+                train_data, num_replicas=hvd.size(), rank=hvd.rank())
 
         dev_score_history = []
         dev_loss_history = []
