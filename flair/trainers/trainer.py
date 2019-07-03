@@ -75,10 +75,10 @@ class ModelTrainer:
 
         if horovod:
             import horovod.torch as hvd
-            hvd.init()
+            #hvd.init()
             torch.manual_seed(self.seed)
             shuffle = False
-            flair.device = torch.device("cuda:{}".format(hvd.local_rank()))
+            #flair.device = torch.device("cuda:{}".format(hvd.local_rank()))
 
         if self.cuda:
             if horovod: torch.cuda.set_device(hvd.local_rank())
