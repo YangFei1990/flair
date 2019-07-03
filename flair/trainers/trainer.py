@@ -78,6 +78,7 @@ class ModelTrainer:
             hvd.init()
             torch.manual_seed(self.seed)
             shuffle = False
+            flair.device = torch.device("cuda:{}".format(hvd.local_rank()))
 
         if self.cuda:
             torch.cuda.set_device(hvd.local_rank())
