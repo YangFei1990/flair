@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List, Union
 
-import datetime
+import datetime, time
 
 from torch.optim.sgd import SGD
 from torch.utils.data.dataset import ConcatDataset
@@ -187,6 +187,7 @@ class ModelTrainer:
             previous_learning_rate = learning_rate
 
             for epoch in range(0 + self.epoch, max_epochs + self.epoch):
+                start = time.time()
                 log_line(log)
 
                 # get new learning rate
@@ -329,6 +330,8 @@ class ModelTrainer:
 
                 # log bad epochs
                 log.info(f"BAD EPOCHS (no improvement): {bad_epochs}")
+                end = time.time()
+                log.info(f"Took {end-start} to process one epoch")
 
                 # output log file
                 with open(loss_txt, "a") as f:
