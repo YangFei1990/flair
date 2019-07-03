@@ -84,6 +84,7 @@ class ModelTrainer:
             if horovod: torch.cuda.set_device(hvd.local_rank())
             torch.cuda.manual_seed(self.seed)
             self.model.cuda()
+        exargs = {'num_workers': 1, 'pin_memory': True} if self.cuda else {'num_workers': num_workers}
 
         if eval_mini_batch_size is None:
             eval_mini_batch_size = mini_batch_size
@@ -216,6 +217,7 @@ class ModelTrainer:
                     shuffle=shuffle,
                     num_workers=num_workers,
                     sampler=sampler,
+                    **exargs,
                 )
 
                 self.model.train()
