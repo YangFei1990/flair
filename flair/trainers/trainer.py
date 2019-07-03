@@ -77,6 +77,7 @@ class ModelTrainer:
             import horovod.torch as hvd
             hvd.init()
             torch.manual_seed(self.seed)
+            shuffle = False
 
         if self.cuda:
             torch.cuda.set_device(hvd.local_rank())
