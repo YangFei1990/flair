@@ -81,7 +81,7 @@ class ModelTrainer:
             flair.device = torch.device("cuda:{}".format(hvd.local_rank()))
 
         if self.cuda:
-            torch.cuda.set_device(hvd.local_rank())
+            if horovod: torch.cuda.set_device(hvd.local_rank())
             torch.cuda.manual_seed(self.seed)
             self.model.cuda()
 
