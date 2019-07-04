@@ -84,7 +84,7 @@ class ModelTrainer:
             if horovod: torch.cuda.set_device(hvd.local_rank())
             torch.cuda.manual_seed(self.seed)
             self.model.cuda()
-        exargs = {'num_workers': 1, 'pin_memory': True} if self.cuda else {'num_workers': num_workers}
+        exargs = {'num_workers': 1, 'pin_memory': True} if (self.cuda and horovod) else {'num_workers': num_workers}
 
         if eval_mini_batch_size is None:
             eval_mini_batch_size = mini_batch_size
@@ -216,7 +216,6 @@ class ModelTrainer:
                     train_data,
                     batch_size=mini_batch_size,
                     shuffle=shuffle,
-                    num_workers=num_workers,
                     sampler=sampler,
                     **exargs,
                 )
@@ -267,7 +266,7 @@ class ModelTrainer:
                     f"EPOCH {epoch + 1} done: loss {train_loss:.4f} - lr {learning_rate:.4f}"
                 )
                 end = time.time()
-                print(f"Took {end-start} to process one epoch")
+                log.info(f"Took {end-start} to process one epoch")
                 # anneal against train loss if training with dev, otherwise anneal against dev score
                 current_score = train_loss
 
