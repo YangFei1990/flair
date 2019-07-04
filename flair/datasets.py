@@ -2488,6 +2488,7 @@ class DataLoader(torch.utils.data.dataloader.DataLoader):
         drop_last=False,
         timeout=0,
         worker_init_fn=None,
+        pin_memory=False,
     ):
 
         # in certain cases, multi-CPU data loading makes no sense and slows
@@ -2518,4 +2519,5 @@ class DataLoader(torch.utils.data.dataloader.DataLoader):
             drop_last=drop_last,
             timeout=timeout,
             worker_init_fn=worker_init_fn,
+            pin_memory=pin_memory,
         )
