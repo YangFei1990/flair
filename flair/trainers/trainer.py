@@ -268,7 +268,7 @@ class ModelTrainer:
                     f"rank:{rank}:EPOCH {epoch + 1} done: loss {train_loss:.4f} - lr {learning_rate:.4f}"
                 )
                 end = time.time()
-                if ranlk == 0: log.info(f"Took {end-start} to process one epoch")
+                if rank == 0: log.info(f"Took {end-start} to process one epoch")
                 # anneal against train loss if training with dev, otherwise anneal against dev score
                 current_score = train_loss
 
