@@ -314,6 +314,7 @@ class ModelTrainer:
                     )
 
                 # determine learning rate annealing through scheduler
+                print(current_score)
                 scheduler.step(current_score)
 
                 train_loss_history.append(train_loss)
