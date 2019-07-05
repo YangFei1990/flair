@@ -73,11 +73,13 @@ class ModelTrainer:
         **kwargs,
     ) -> dict:
 
+        rank = 0
         if horovod:
             import horovod.torch as hvd
             #hvd.init()
             #torch.manual_seed(self.seed)
             shuffle = False
+            rank = hvd.rank()
             #flair.device = torch.device("cuda:{}".format(hvd.local_rank()))
 
         if self.cuda:
@@ -248,7 +250,7 @@ class ModelTrainer:
 
                     if batch_no % modulo == 0:
                         log.info(
-                            f"epoch {epoch + 1} - iter {batch_no}/{total_number_of_batches} - loss "
+                            f"rank:{rank}: epoch {epoch + 1} - iter {batch_no}/{total_number_of_batches} - loss "
                             f"{train_loss / seen_batches:.8f}"
                         )
                         iteration = epoch * total_number_of_batches + batch_no
@@ -263,10 +265,10 @@ class ModelTrainer:
 
                 log_line(log)
                 log.info(
-                    f"EPOCH {epoch + 1} done: loss {train_loss:.4f} - lr {learning_rate:.4f}"
+                    f"rank:{rank}:EPOCH {epoch + 1} done: loss {train_loss:.4f} - lr {learning_rate:.4f}"
                 )
                 end = time.time()
-                log.info(f"Took {end-start} to process one epoch")
+                if ranlk == 0: log.info(f"Took {end-start} to process one epoch")
                 # anneal against train loss if training with dev, otherwise anneal against dev score
                 current_score = train_loss
 
@@ -291,7 +293,7 @@ class ModelTrainer:
                     )
                     result_line += f"\t{dev_loss}\t{dev_eval_result.log_line}"
                     log.info(
-                        f"DEV : loss {dev_loss} - score {dev_eval_result.main_score}"
+                        f"rank {rank}: DEV : loss {dev_loss} - score {dev_eval_result.main_score}"
                     )
                     # calculate scores using dev data if available
                     # append dev score to score history
@@ -317,11 +319,9 @@ class ModelTrainer:
                 if horovod:
                     from mpi4py import MPI
                     comm = MPI.COMM_WORLD
-                    rank = comm.Get_rank()
                     size = comm.Get_size()
-                    print(f"before allreduce, current_score:{current_score}")
                     current_score = comm.allreduce(current_score, op=MPI.SUM) / size
-                    print(f"after allreduce, current_score:{current_score}")
+                    if rank == 0: log.info(f"after allreduce, current_score:{current_score}")
                 scheduler.step(current_score)
 
                 train_loss_history.append(train_loss)
