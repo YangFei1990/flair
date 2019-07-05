@@ -316,7 +316,7 @@ class ModelTrainer:
                 # determine learning rate annealing through scheduler
                 if horovod:
                     current_score = hvd.allreduce(current_score)
-                print(f."current_score:{current_score}")
+                print(f"current_score:{current_score}")
                 scheduler.step(current_score)
 
                 train_loss_history.append(train_loss)
