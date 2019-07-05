@@ -315,8 +315,13 @@ class ModelTrainer:
 
                 # determine learning rate annealing through scheduler
                 if horovod:
-                    current_score = hvd.allreduce(current_score)
-                print(f"current_score:{current_score}")
+                    from mpi4py import MPI
+                    comm = MPI.COMM_WORLD
+                    rank = comm.Get_rank()
+                    size = comm.Get_size()
+                    print(f"before allreduce, current_score:{current_score}")
+                    current_score = comm.allreduce(current_score, op=MPI.SUM) / size
+                    print(f"after allreduce, current_score:{current_score}")
                 scheduler.step(current_score)
 
                 train_loss_history.append(train_loss)
