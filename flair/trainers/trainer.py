@@ -241,8 +241,10 @@ class ModelTrainer:
 
                     optimizer.zero_grad()
                     loss.backward()
+                    optimizer.synchronize()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
-                    optimizer.step()
+                    with optimizer.skip_synchronize():
+                        optimizer.step()
 
                     seen_batches += 1
                     train_loss += loss.item()
