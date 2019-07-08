@@ -77,14 +77,14 @@ class ModelTrainer:
         if horovod:
             import horovod.torch as hvd
             #hvd.init()
-            #torch.manual_seed(self.seed)
+            torch.manual_seed(self.seed)
             shuffle = False
             rank = hvd.rank()
             #flair.device = torch.device("cuda:{}".format(hvd.local_rank()))
 
         if self.cuda:
             if horovod: torch.cuda.set_device(hvd.local_rank())
-            #torch.cuda.manual_seed(self.seed)
+            torch.cuda.manual_seed(self.seed)
             self.model.cuda()
         exargs = {'num_workers': 1, 'pin_memory': True} if (self.cuda and horovod) else {'num_workers': num_workers}
 
@@ -149,6 +149,7 @@ class ModelTrainer:
         anneal_mode = "min" if train_with_dev else "max"
 
         if isinstance(optimizer, (AdamW, SGDW)):
+            log.info(f'Scheduler is ReduceLRWDOnPlateau ')
             scheduler = ReduceLRWDOnPlateau(
                 optimizer,
                 factor=anneal_factor,
@@ -157,6 +158,7 @@ class ModelTrainer:
                 verbose=True,
             )
         else:
+            log.info(f'Scheduler is ReduceLROnPlateau ')
             scheduler = ReduceLROnPlateau(
                 optimizer,
                 factor=anneal_factor,
