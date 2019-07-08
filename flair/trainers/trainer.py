@@ -243,9 +243,9 @@ class ModelTrainer:
 
                     optimizer.zero_grad()
                     loss.backward()
-                    if hovorod: optimizer.synchronize()
+                    if horovod: optimizer.synchronize()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
-                    if hovorod:
+                    if horovod:
                         with optimizer.skip_synchronize():
                             optimizer.step()
                     else:
