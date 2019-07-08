@@ -134,6 +134,8 @@ class ModelTrainer:
             optimizer.load_state_dict(self.optimizer_state)
 
         if horovod:
+            # Broadcast parameters from rank 0 to all other processes.
+            hvd.broadcast_parameters(self.model.state_dict(), root_rank=0)
             # Add Horovod Distributed Optimizer
             hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
@@ -141,8 +143,7 @@ class ModelTrainer:
                     named_parameters=self.model.named_parameters(),
                     )
 
-            # Broadcast parameters from rank 0 to all other processes.
-            hvd.broadcast_parameters(self.model.state_dict(), root_rank=0)
+
 
         # minimize training loss if training with dev data, else maximize dev score
         anneal_mode = "min" if train_with_dev else "max"
@@ -184,6 +185,14 @@ class ModelTrainer:
         dev_loss_history = []
         train_loss_history = []
 
+        batch_loader = DataLoader(
+            train_data,
+            batch_size=mini_batch_size,
+            shuffle=shuffle,
+            sampler=sampler,
+            **exargs,
+        )
+
         # At any point you can hit Ctrl + C to break out of training early.
         try:
             previous_learning_rate = learning_rate
@@ -214,16 +223,10 @@ class ModelTrainer:
                     log_line(log)
                     break
 
-                batch_loader = DataLoader(
-                    train_data,
-                    batch_size=mini_batch_size,
-                    shuffle=shuffle,
-                    sampler=sampler,
-                    **exargs,
-                )
+
 
                 self.model.train()
-
+                sampler.set_epoch(epoch)
                 train_loss: float = 0
 
                 seen_batches = 0
