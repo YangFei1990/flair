@@ -346,41 +346,42 @@ class ModelTrainer:
                 log.info(f"BAD EPOCHS (no improvement): {bad_epochs}")
 
                 # output log file
-                with open(loss_txt, "a") as f:
+                if rank == 0:
+                    with open(loss_txt, "a") as f:
 
-                    # make headers on first epoch
-                    if epoch == 0:
+                        # make headers on first epoch
+                        if epoch == 0:
+                            f.write(
+                                f"EPOCH\tTIMESTAMP\tBAD_EPOCHS\tLEARNING_RATE\tTRAIN_LOSS"
+                            )
+
+                            if log_train:
+                                f.write(
+                                    "\tTRAIN_"
+                                    + "\tTRAIN_".join(
+                                        train_eval_result.log_header.split("\t")
+                                    )
+                                )
+                            if log_dev:
+                                f.write(
+                                    "\tDEV_LOSS\tDEV_"
+                                    + "\tDEV_".join(dev_eval_result.log_header.split("\t"))
+                                )
+                            if log_test:
+                                f.write(
+                                    "\tTEST_LOSS\tTEST_"
+                                    + "\tTEST_".join(
+                                        test_eval_result.log_header.split("\t")
+                                    )
+                                )
+
                         f.write(
-                            f"EPOCH\tTIMESTAMP\tBAD_EPOCHS\tLEARNING_RATE\tTRAIN_LOSS"
+                            f"\n{epoch}\t{datetime.datetime.now():%H:%M:%S}\t{bad_epochs}\t{learning_rate:.4f}\t{train_loss}"
                         )
-
-                        if log_train:
-                            f.write(
-                                "\tTRAIN_"
-                                + "\tTRAIN_".join(
-                                    train_eval_result.log_header.split("\t")
-                                )
-                            )
-                        if log_dev:
-                            f.write(
-                                "\tDEV_LOSS\tDEV_"
-                                + "\tDEV_".join(dev_eval_result.log_header.split("\t"))
-                            )
-                        if log_test:
-                            f.write(
-                                "\tTEST_LOSS\tTEST_"
-                                + "\tTEST_".join(
-                                    test_eval_result.log_header.split("\t")
-                                )
-                            )
-
-                    f.write(
-                        f"\n{epoch}\t{datetime.datetime.now():%H:%M:%S}\t{bad_epochs}\t{learning_rate:.4f}\t{train_loss}"
-                    )
-                    f.write(result_line)
+                        f.write(result_line)
 
                 # if checkpoint is enable, save model at each epoch
-                if checkpoint and not param_selection_mode:
+                if checkpoint and not param_selection_mode and rank == 0:
                     self.model.save_checkpoint(
                         base_path / "checkpoint.pt",
                         optimizer.state_dict(),
@@ -394,33 +395,40 @@ class ModelTrainer:
                     not train_with_dev
                     and not param_selection_mode
                     and current_score == scheduler.best
+                    and rank == 0
                 ):
                     self.model.save(base_path / "best-model.pt")
 
             # if we do not use dev data for model selection, save final model
-            if save_final_model and not param_selection_mode:
+            if save_final_model and not param_selection_mode and rank == 0:
                 self.model.save(base_path / "final-model.pt")
 
         except KeyboardInterrupt:
             log_line(log)
             log.info("Exiting from training early.")
-            if not param_selection_mode:
+            if not param_selection_mode and rank == 0:
                 log.info("Saving model ...")
                 self.model.save(base_path / "final-model.pt")
                 log.info("Done.")
 
         # test best model if test data is present
-        if self.corpus.test:
-            final_score = self.final_test(
-                base_path,
-                embeddings_in_memory,
-                evaluation_metric,
-                eval_mini_batch_size,
-                num_workers,
-            )
-        else:
-            final_score = 0
-            log.info("Test data not provided setting final score to 0")
+        final_score = None
+        if rank == 0:
+            if self.corpus.test:
+                final_score = self.final_test(
+                    base_path,
+                    embeddings_in_memory,
+                    evaluation_metric,
+                    eval_mini_batch_size,
+                    num_workers,
+                )
+            else:
+                final_score = 0
+                log.info("Test data not provided setting final score to 0")
+        if horovod:
+            from mpi4py import MPI
+            comm = MPI.COMM_WORLD
+            comm.broadcast(final_score, root=0)
 
         log.removeHandler(log_handler)
 
