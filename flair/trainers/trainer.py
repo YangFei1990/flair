@@ -228,7 +228,7 @@ class ModelTrainer:
 
 
                 self.model.train()
-                sampler.set_epoch(epoch)
+                if horovod: sampler.set_epoch(epoch)
                 train_loss: float = 0
 
                 seen_batches = 0
@@ -243,9 +243,12 @@ class ModelTrainer:
 
                     optimizer.zero_grad()
                     loss.backward()
-                    optimizer.synchronize()
+                    if hovorod: optimizer.synchronize()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5.0)
-                    with optimizer.skip_synchronize():
+                    if hovorod:
+                        with optimizer.skip_synchronize():
+                            optimizer.step()
+                    else:
                         optimizer.step()
 
                     seen_batches += 1
