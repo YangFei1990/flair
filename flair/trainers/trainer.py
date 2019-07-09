@@ -86,8 +86,7 @@ class ModelTrainer:
             if horovod: torch.cuda.set_device(hvd.local_rank())
             torch.cuda.manual_seed(self.seed)
             self.model.cuda()
-        #exargs = {'num_workers': 1, 'pin_memory': True} if (self.cuda and horovod) else {'num_workers': num_workers}
-        exargs = {'num_workers': num_workers}
+        exargs = {'num_workers': 1, 'pin_memory': True} if (self.cuda and horovod) else {'num_workers': num_workers}
         if eval_mini_batch_size is None:
             eval_mini_batch_size = mini_batch_size
 
@@ -270,17 +269,11 @@ class ModelTrainer:
                             )
 
                 train_loss /= seen_batches
-                '''
-                if horovod:
-                    from mpi4py import MPI
-                    comm = MPI.COMM_WORLD
-                    size = comm.Get_size()
-                    train_loss = comm.allreduce(train_loss, op=MPI.SUM) / size
-                '''
+
                 self.model.eval()
 
                 log_line(log)
-                if rank == 0: log.info(
+                log.info(
                     f"rank:{rank}:EPOCH {epoch + 1} done: loss {train_loss:.4f} - lr {learning_rate:.4f}"
                 )
                 end = time.time()
@@ -414,13 +407,7 @@ class ModelTrainer:
                 log.info("Saving model ...")
                 self.model.save(base_path / "final-model.pt")
                 log.info("Done.")
-        '''
-        if horovod:
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
-            comm.barrier()
-            log.info(f"rank {rank} ready to go ...")
-        '''
+
         # test best model if test data is present
         final_score = None
         if rank == 0:
@@ -442,9 +429,7 @@ class ModelTrainer:
             comm = MPI.COMM_WORLD
             final_score = comm.bcast(final_score, root=0)
 
-        log.info(f"final test finished..., final score {final_score}")
         if rank == 0: log.removeHandler(log_handler)
-        print("ready to return..")
         return {
             "test_score": final_score,
             "dev_score_history": dev_score_history,
