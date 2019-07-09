@@ -270,13 +270,13 @@ class ModelTrainer:
                             )
 
                 train_loss /= seen_batches
-
+                '''
                 if horovod:
                     from mpi4py import MPI
                     comm = MPI.COMM_WORLD
                     size = comm.Get_size()
                     train_loss = comm.allreduce(train_loss, op=MPI.SUM) / size
-
+                '''
                 self.model.eval()
 
                 log_line(log)
