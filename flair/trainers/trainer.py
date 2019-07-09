@@ -300,7 +300,7 @@ class ModelTrainer:
                     )
                     result_line += f"\t{train_eval_result.log_line}"
 
-                if log_dev:
+                if not log_dev:
                     dev_eval_result, dev_loss = self.model.evaluate(
                         self.corpus.dev,
                         eval_mini_batch_size,
@@ -317,7 +317,7 @@ class ModelTrainer:
                     dev_loss_history.append(dev_loss)
 
                     current_score = dev_eval_result.main_score
-                
+
                 if log_test:
                     test_eval_result, test_loss = self.model.evaluate(
                         self.corpus.test,
