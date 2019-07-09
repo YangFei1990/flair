@@ -437,6 +437,7 @@ class ModelTrainer:
             else:
                 final_score = 0
                 log.info("Test data not provided setting final score to 0")
+        log.info("Wait to broadcast final score....")
         if horovod:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
@@ -496,7 +497,7 @@ class ModelTrainer:
 
         # get and return the final test score of best model
         final_score = test_results.main_score
-
+        log.info("Testing finished ...")
         return final_score
 
     @classmethod
