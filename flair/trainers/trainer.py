@@ -79,7 +79,7 @@ class ModelTrainer:
             #hvd.init()
             torch.manual_seed(self.seed)
             shuffle = False
-            rank = hvd.rank()
+            rank = hvd.local_rank()
             #flair.device = torch.device("cuda:{}".format(hvd.local_rank()))
 
         if self.cuda:
@@ -95,7 +95,7 @@ class ModelTrainer:
         if type(base_path) is str:
             base_path = Path(base_path)
 
-        #log_handler = add_file_handler(log, base_path / "training.log")
+        if rank == 0: log_handler = add_file_handler(log, base_path / "training.log")
 
         log_line(log)
         log.info(f'Model: "{self.model}"')
@@ -125,7 +125,7 @@ class ModelTrainer:
         log_dev = True if not train_with_dev else False
 
         # prepare loss logging file and set up header
-        loss_txt = init_output_file(base_path, "loss.tsv")
+        if rank == 0: loss_txt = init_output_file(base_path, "loss.tsv")
 
         weight_extractor = WeightExtractor(base_path)
 
@@ -451,7 +451,7 @@ class ModelTrainer:
             comm.broadcast(final_score, root=0)
 
         log.info(f"final test finished..., final score {final_score}")
-        #log.removeHandler(log_handler)
+        if rank == 0: log.removeHandler(log_handler)
         print("ready to return..")
         return {
             "test_score": final_score,
