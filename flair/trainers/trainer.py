@@ -374,7 +374,7 @@ class ModelTrainer:
                                         train_eval_result.log_header.split("\t")
                                     )
                                 )
-                            if log_dev:
+                            if not log_dev:
                                 f.write(
                                     "\tDEV_LOSS\tDEV_"
                                     + "\tDEV_".join(dev_eval_result.log_header.split("\t"))
