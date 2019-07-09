@@ -424,7 +424,7 @@ class ModelTrainer:
                 log.info("Done.")
 
         # test best model if test data is present
-        final_score = None
+        #final_score = None
         if self.corpus.test:
             final_score = self.final_test(
                 base_path,
@@ -437,8 +437,9 @@ class ModelTrainer:
             final_score = 0
             log.info("Test data not provided setting final score to 0")
 
+        log.info("final test finished...")
         log.removeHandler(log_handler)
-
+        print("ready to return..")
         return {
             "test_score": final_score,
             "dev_score_history": dev_score_history,
