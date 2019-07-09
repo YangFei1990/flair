@@ -437,7 +437,7 @@ class ModelTrainer:
             final_score = 0
             log.info("Test data not provided setting final score to 0")
 
-        log.info("final test finished...")
+        log.info(f"final test finished..., final score {final_score}")
         log.removeHandler(log_handler)
         print("ready to return..")
         return {
