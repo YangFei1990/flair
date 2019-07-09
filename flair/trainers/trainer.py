@@ -427,6 +427,7 @@ class ModelTrainer:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
             comm.barrier()
+            log.info(f"rank {rank} ready to go ...")
         # test best model if test data is present
         final_score = None
         if rank == 0:
