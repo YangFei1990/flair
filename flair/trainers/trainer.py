@@ -442,7 +442,8 @@ class ModelTrainer:
             comm = MPI.COMM_WORLD
             comm.broadcast(final_score, root=0)
 
-        log.removeHandler(log_handler)
+
+        if rank == 0: log.removeHandler(log_handler)
         log.info("Ready to return.")
 
         return {
