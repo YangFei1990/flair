@@ -425,27 +425,19 @@ class ModelTrainer:
 
         # test best model if test data is present
         final_score = None
-        if rank == 0:
-            if self.corpus.test:
-                final_score = self.final_test(
-                    base_path,
-                    embeddings_in_memory,
-                    evaluation_metric,
-                    eval_mini_batch_size,
-                    num_workers,
-                )
-            else:
-                final_score = 0
-                log.info("Test data not provided setting final score to 0")
-        log.info("Wait to broadcast final score....")
-        if horovod:
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
-            comm.broadcast(final_score, root=0)
+        if self.corpus.test:
+            final_score = self.final_test(
+                base_path,
+                embeddings_in_memory,
+                evaluation_metric,
+                eval_mini_batch_size,
+                num_workers,
+            )
+        else:
+            final_score = 0
+            log.info("Test data not provided setting final score to 0")
 
-
-        if rank == 0: log.removeHandler(log_handler)
-        log.info("Ready to return.")
+        log.removeHandler(log_handler)
 
         return {
             "test_score": final_score,
@@ -497,7 +489,6 @@ class ModelTrainer:
 
         # get and return the final test score of best model
         final_score = test_results.main_score
-        log.info("Testing finished ...")
         return final_score
 
     @classmethod
