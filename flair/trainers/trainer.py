@@ -299,7 +299,7 @@ class ModelTrainer:
                         num_workers=num_workers,
                     )
                     result_line += f"\t{train_eval_result.log_line}"
-                '''
+
                 if log_dev:
                     dev_eval_result, dev_loss = self.model.evaluate(
                         self.corpus.dev,
@@ -317,7 +317,7 @@ class ModelTrainer:
                     dev_loss_history.append(dev_loss)
 
                     current_score = dev_eval_result.main_score
-                '''
+                
                 if log_test:
                     test_eval_result, test_loss = self.model.evaluate(
                         self.corpus.test,
@@ -332,14 +332,14 @@ class ModelTrainer:
                     )
 
                 # determine learning rate annealing through scheduler
-
+                '''
                 if horovod:
                     from mpi4py import MPI
                     comm = MPI.COMM_WORLD
                     size = comm.Get_size()
                     current_score = comm.allreduce(current_score, op=MPI.SUM) / size
                     if rank == 0: log.info(f"after allreduce, current_score:{current_score}")
-
+                '''
                 scheduler.step(current_score)
 
                 train_loss_history.append(train_loss)
@@ -422,7 +422,7 @@ class ModelTrainer:
                 log.info("Saving model ...")
                 self.model.save(base_path / "final-model.pt")
                 log.info("Done.")
-
+        '''
         if horovod:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
@@ -459,7 +459,8 @@ class ModelTrainer:
             "train_loss_history": train_loss_history,
             "dev_loss_history": dev_loss_history,
         }
-        
+        '''
+        return
 
     def final_test(
         self,
