@@ -299,7 +299,7 @@ class ModelTrainer:
                         num_workers=num_workers,
                     )
                     result_line += f"\t{train_eval_result.log_line}"
-                '''
+
                 if log_dev:
                     dev_eval_result, dev_loss = self.model.evaluate(
                         self.corpus.dev,
@@ -317,7 +317,7 @@ class ModelTrainer:
                     dev_loss_history.append(dev_loss)
 
                     current_score = dev_eval_result.main_score
-                '''
+
                 if log_test:
                     test_eval_result, test_loss = self.model.evaluate(
                         self.corpus.test,
@@ -366,13 +366,11 @@ class ModelTrainer:
                                         train_eval_result.log_header.split("\t")
                                     )
                                 )
-                            '''
                             if log_dev:
                                 f.write(
                                     "\tDEV_LOSS\tDEV_"
                                     + "\tDEV_".join(dev_eval_result.log_header.split("\t"))
                                 )
-                            '''
                             if log_test:
                                 f.write(
                                     "\tTEST_LOSS\tTEST_"
@@ -422,6 +420,7 @@ class ModelTrainer:
             comm = MPI.COMM_WORLD
             comm.barrier()
             log.info(f"rank {rank} ready to go ...")
+        '''
         # test best model if test data is present
         final_score = None
         if rank == 0:
@@ -453,8 +452,6 @@ class ModelTrainer:
             "train_loss_history": train_loss_history,
             "dev_loss_history": dev_loss_history,
         }
-        '''
-        return
 
     def final_test(
         self,
