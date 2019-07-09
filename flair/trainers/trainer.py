@@ -440,7 +440,7 @@ class ModelTrainer:
         if horovod:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
-            comm.bcast(final_score, root=0)
+            final_score = comm.bcast(final_score, root=0)
 
         log.info(f"final test finished..., final score {final_score}")
         if rank == 0: log.removeHandler(log_handler)
