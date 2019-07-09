@@ -95,7 +95,7 @@ class ModelTrainer:
         if type(base_path) is str:
             base_path = Path(base_path)
 
-        log_handler = add_file_handler(log, base_path / "training.log")
+        #log_handler = add_file_handler(log, base_path / "training.log")
 
         log_line(log)
         log.info(f'Model: "{self.model}"')
