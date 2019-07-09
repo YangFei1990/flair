@@ -451,7 +451,7 @@ class ModelTrainer:
             comm.broadcast(final_score, root=0)
 
         log.info(f"final test finished..., final score {final_score}")
-        log.removeHandler(log_handler)
+        #log.removeHandler(log_handler)
         print("ready to return..")
         return {
             "test_score": final_score,
