@@ -86,8 +86,8 @@ class ModelTrainer:
             if horovod: torch.cuda.set_device(hvd.local_rank())
             torch.cuda.manual_seed(self.seed)
             self.model.cuda()
-        exargs = {'num_workers': 1, 'pin_memory': True} if (self.cuda and horovod) else {'num_workers': num_workers}
-
+        #exargs = {'num_workers': 1, 'pin_memory': True} if (self.cuda and horovod) else {'num_workers': num_workers}
+        exargs = {'num_workers': num_workers}
         if eval_mini_batch_size is None:
             eval_mini_batch_size = mini_batch_size
 
@@ -299,8 +299,8 @@ class ModelTrainer:
                         num_workers=num_workers,
                     )
                     result_line += f"\t{train_eval_result.log_line}"
-
-                if not log_dev:
+                '''
+                if log_dev:
                     dev_eval_result, dev_loss = self.model.evaluate(
                         self.corpus.dev,
                         eval_mini_batch_size,
@@ -317,7 +317,7 @@ class ModelTrainer:
                     dev_loss_history.append(dev_loss)
 
                     current_score = dev_eval_result.main_score
-
+                '''
                 if log_test:
                     test_eval_result, test_loss = self.model.evaluate(
                         self.corpus.test,
@@ -332,14 +332,6 @@ class ModelTrainer:
                     )
 
                 # determine learning rate annealing through scheduler
-                '''
-                if horovod:
-                    from mpi4py import MPI
-                    comm = MPI.COMM_WORLD
-                    size = comm.Get_size()
-                    current_score = comm.allreduce(current_score, op=MPI.SUM) / size
-                    if rank == 0: log.info(f"after allreduce, current_score:{current_score}")
-                '''
                 scheduler.step(current_score)
 
                 train_loss_history.append(train_loss)
@@ -374,11 +366,13 @@ class ModelTrainer:
                                         train_eval_result.log_header.split("\t")
                                     )
                                 )
-                            if not log_dev:
+                            '''
+                            if log_dev:
                                 f.write(
                                     "\tDEV_LOSS\tDEV_"
                                     + "\tDEV_".join(dev_eval_result.log_header.split("\t"))
                                 )
+                            '''
                             if log_test:
                                 f.write(
                                     "\tTEST_LOSS\tTEST_"
