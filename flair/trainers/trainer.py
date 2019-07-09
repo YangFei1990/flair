@@ -339,7 +339,7 @@ class ModelTrainer:
                     size = comm.Get_size()
                     current_score = comm.allreduce(current_score, op=MPI.SUM) / size
                     if rank == 0: log.info(f"after allreduce, current_score:{current_score}")
-                
+
                 scheduler.step(current_score)
 
                 train_loss_history.append(train_loss)
@@ -422,7 +422,7 @@ class ModelTrainer:
                 log.info("Saving model ...")
                 self.model.save(base_path / "final-model.pt")
                 log.info("Done.")
-        '''
+
         if horovod:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
@@ -459,8 +459,7 @@ class ModelTrainer:
             "train_loss_history": train_loss_history,
             "dev_loss_history": dev_loss_history,
         }
-        '''
-        return
+        
 
     def final_test(
         self,
