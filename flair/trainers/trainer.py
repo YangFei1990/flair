@@ -447,6 +447,7 @@ class ModelTrainer:
         if horovod:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
+            comm.barrier()
             comm.broadcast(final_score, root=0)
 
         log.info(f"final test finished..., final score {final_score}")
