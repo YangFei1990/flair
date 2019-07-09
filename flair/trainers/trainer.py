@@ -422,7 +422,7 @@ class ModelTrainer:
                 log.info("Saving model ...")
                 self.model.save(base_path / "final-model.pt")
                 log.info("Done.")
-
+        '''
         if horovod:
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
@@ -459,6 +459,8 @@ class ModelTrainer:
             "train_loss_history": train_loss_history,
             "dev_loss_history": dev_loss_history,
         }
+        '''
+        return
 
     def final_test(
         self,
